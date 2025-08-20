@@ -1,4 +1,5 @@
 # Go SNI Proxy
+[![Build Status](https://github.com/mestery/gosniproxy/actions/workflows/build.yml/badge.svg)](https://github.com/mestery/gosniproxy/actions/workflows/build.yml)
 
 A Go-based proxy server that handles HTTP and HTTPS connections based on Server Name Indication (SNI) for routing to different backends.
 
