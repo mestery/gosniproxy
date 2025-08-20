@@ -36,14 +36,21 @@ RUN ARCH=$(uname -m) && \
 # Set working directory
 WORKDIR /app
 
+# Copy only go.mod and go.sum first to leverage Docker cache
+COPY go.mod go.sum ./
+RUN go mod download
+
 # Copy source files
 COPY . .
 
-# Build the eBPF program
-RUN cd kern && clang -O2 -target bpf -I/usr/include -c sockmap.bpf.c -o sockmap.bpf.o
+# Install bpf2go into $GOPATH/bin
+RUN go install github.com/cilium/ebpf/cmd/bpf2go@latest
+
+# Add Go bin dir to PATH
+ENV PATH=$PATH:/root/go/bin
 
 # Build the Go application
-RUN go build -o gosniproxy .
+RUN go generate ./... && go build -o gosniproxy .
 
 FROM debian:trixie
 

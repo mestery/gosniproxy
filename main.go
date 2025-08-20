@@ -1,3 +1,6 @@
+//
+// Copyright (c) 2025, Kyle Mestery
+//
 package main
 
 import (
@@ -337,33 +340,46 @@ func (p *Proxy) proxyConnection(clientConn net.Conn, backendConn net.Conn) {
 	wg.Wait()
 }
 
-// offloadToKernel offloads connection to kernel using eBPF
-func (p *Proxy) offloadToKernel(clientConn net.Conn, backendConn net.Conn, hostname string) {
-	// In a real implementation, this would:
-	// 1. Create an eBPF program that uses SOCKMAP
-	// 2. Add the connection to the map
-	// 3. Return control to kernel for handling
+func (p *Proxy) waitForClose(a, b net.Conn) {
+	// Block on either side closing; TCPConn has Read deadline logic if you want.
+	buf := make([]byte, 1)
+	_ = a.SetReadDeadline(time.Time{})
+	_ = b.SetReadDeadline(time.Time{})
+	// Wait for either side to error/EOF; then close both.
+	_, _ = a.Read(buf)
+	_ = a.Close()
+	_ = b.Close()
+}
 
+func (p *Proxy) offloadToKernel(clientConn net.Conn, backendConn net.Conn, hostname string) {
 	log.Printf("Offloading connection for %s to kernel via eBPF", hostname)
 
-	// Create the eBPF map and program, start with a ebpfProgram
 	if p.ebpfProgram == nil {
-		// Create the eBPF map and program
 		ebpfProgram, err := NewEBPFProgram()
 		if err != nil {
 			log.Printf("Failed to create eBPF program: %v", err)
+			_ = clientConn.Close()
+			_ = backendConn.Close()
 			return
 		}
 		p.ebpfProgram = ebpfProgram
+		if err := p.ebpfProgram.Start(); err != nil {
+			log.Printf("Failed to start eBPF program: %v", err)
+			_ = clientConn.Close()
+			_ = backendConn.Close()
+			return
+		}
 	}
 
-	// Start the eBPF program
-	if err := p.ebpfProgram.Start(); err != nil {
-		log.Printf("Failed to start eBPF program: %v", err)
+	if err := p.ebpfProgram.OffloadPair(clientConn, backendConn); err != nil {
+		log.Printf("eBPF offload failed, falling back to userspace proxy: %v", err)
+		p.proxyConnection(clientConn, backendConn)
 		return
 	}
 
-	return
+	// The kernel now proxies between sockets. We just need to keep them open
+	// until one side closes. A tiny waiter will close both on EOF/error/quit.
+	go p.waitForClose(clientConn, backendConn)
 }
 
 // handleDTLSConnections handles incoming DTLS connections
