@@ -20,9 +20,34 @@ When `EnableEBPF` is set to true, the proxy will attempt to offload connections 
 
 This approach reduces CPU overhead and improves performance for high-volume connections.
 
+## Building and Running with Docker
+
+### Building the Container
+
+To build the Docker container:
+
+```bash
+docker build -t gosniproxy .
+```
+
+### Running the Container
+
+To run the proxy in a container:
+
+```bash
+# Run with default configuration (port 443)
+docker run --privileged -p 443:443 gosniproxy
+
+# Or run with custom configuration
+# Note: You'll need to mount your certificate files and configure backends appropriately
+docker run --privileged -p 443:443 -v /path/to/certs:/certs gosniproxy
+```
+
+> **Note**: The `--privileged` flag is required for eBPF functionality as it needs access to kernel resources.
+
 ## Usage
 
-To run the proxy:
+To run the proxy directly (without Docker):
 
 ```bash
 ./gosniproxy
@@ -40,7 +65,7 @@ The proxy is configured via the `Config` struct in `main.go`. You can modify:
 - `EnableDTLS`: Enable DTLS support
 - `EnableEBPF`: Enable eBPF connection offloading
 
-## Building
+## Building (without Docker)
 
 To build the project:
 
