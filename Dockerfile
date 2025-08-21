@@ -57,8 +57,8 @@ FROM debian:trixie
 # Copy the built binary from builder stage
 COPY --from=builder /app/gosniproxy /usr/local/bin/gosniproxy
 
-# Expose port 443 for the proxy
-EXPOSE 443
+# Expose port 5443 for the proxy
+EXPOSE 5443
 
-# Run the application
-CMD ["/usr/local/bin/gosniproxy"]
+# Run the application with new command line options
+CMD ["/usr/local/bin/gosniproxy", "-listen-addr", "0.0.0.0:5443", "-backend-mapping", "example.com:127.0.0.1:8443", "-backend-mapping", "test.com:127.0.0.1:8444"]

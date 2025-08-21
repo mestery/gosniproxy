@@ -1,9 +1,14 @@
 //
 // Copyright (c) 2025, Kyle Mestery
+// All rights reserved.
 //
+// SPDX-License-Identifier: MIT License
+//
+
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -420,16 +425,41 @@ func (p *Proxy) handleDTLSConnection(addr *net.UDPAddr, data []byte) {
 }
 
 func main() {
-	config := &Config{
-		ListenAddr: "0.0.0.0:443",
-		BackendMapping: map[string]string{
+	// Define command-line flags
+	listenAddr := flag.String("listen-addr", "0.0.0.0:443", "Address to listen on")
+	certFile := flag.String("cert-file", "server.crt", "TLS certificate file")
+	keyFile := flag.String("key-file", "server.key", "TLS key file")
+	enableDTLS := flag.Bool("enable-dtls", true, "Enable DTLS support")
+	enableEBPF := flag.Bool("enable-ebpf", true, "Enable eBPF connection offloading")
+
+	// Parse backend mappings from command line
+	backendMapping := make(map[string]string)
+	flag.Func("backend-mapping", "Backend mapping in format 'host:address' (can be specified multiple times)", func(s string) error {
+		parts := strings.SplitN(s, ":", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid backend mapping format: %s", s)
+		}
+		backendMapping[parts[0]] = parts[1]
+		return nil
+	})
+
+	flag.Parse()
+
+	// Set up default backend mappings if none provided
+	if len(backendMapping) == 0 {
+		backendMapping = map[string]string{
 			"example.com": "127.0.0.1:8443",
 			"test.com":    "127.0.0.1:8444",
-		},
-		CertFile:   "server.crt",
-		KeyFile:    "server.key",
-		EnableDTLS: true,
-		EnableEBPF: true,
+		}
+	}
+
+	config := &Config{
+		ListenAddr:     *listenAddr,
+		BackendMapping: backendMapping,
+		CertFile:       *certFile,
+		KeyFile:        *keyFile,
+		EnableDTLS:     *enableDTLS,
+		EnableEBPF:     *enableEBPF,
 	}
 
 	proxy := NewProxy(config)
