@@ -1,6 +1,10 @@
 //go:build linux
+
 //
 // Copyright (c) 2025, Kyle Mestery
+// All rights reserved.
+//
+// SPDX-License-Identifier: MIT License
 //
 
 package main

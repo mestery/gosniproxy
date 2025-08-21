@@ -58,13 +58,14 @@ The proxy listens on port 443 by default and routes based on SNI or Host headers
 
 ## Configuration
 
-The proxy is configured via the `Config` struct in `main.go`. You can modify:
+The proxy can be configured via command-line arguments:
 
-- `ListenAddr`: Address to listen on
-- `BackendMapping`: Map of hostnames to backend addresses
-- `CertFile` and `KeyFile`: TLS certificate files (for HTTPS)
-- `EnableDTLS`: Enable DTLS support
-- `EnableEBPF`: Enable eBPF connection offloading
+- `-listen-addr`: Address to listen on (default: 0.0.0.0:443)
+- `-backend-mapping`: Backend mapping in format 'host:address' (can be specified multiple times)
+- `-cert-file`: TLS certificate file (default: server.crt)
+- `-key-file`: TLS key file (default: server.key)
+- `-enable-dtls`: Enable DTLS support (default: true)
+- `-enable-ebpf`: Enable eBPF connection offloading (default: true)
 
 ## Building (without Docker)
 
@@ -72,6 +73,18 @@ To build the project:
 
 ```bash
 go build -o gosniproxy main.go
+```
+
+## Testing
+
+To run tests:
+
+```bash
+# Run unit tests
+./test-scripts/unit-test.sh
+
+# Run integration tests (requires OpenSSL and Python)
+./test-scripts/integration-test.sh
 ```
 
 ## License

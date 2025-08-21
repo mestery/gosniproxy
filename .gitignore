@@ -32,3 +32,9 @@ Thumbs.db
 
 # Ignore the built gosniproxy
 gosniproxy
+
+# Ignore .key, .csr, .crt, and .srl files in test-scripts directory
+test-scripts/*.key
+test-scripts/*.csr
+test-scripts/*.crt
+test-scripts/*.srl
