@@ -123,12 +123,12 @@ func (e *EBPFProgram) OffloadPair(client, backend net.Conn) error {
 		return fmt.Errorf("attach to client socket: %w", err)
 	}
 
-	tcpClient, ok = backend.(*net.TCPConn)
+	tcpBackend, ok := backend.(*net.TCPConn)
 	if !ok {
 		return fmt.Errorf("backend is not *net.TCPConn")
 	}
-	if err := link.AttachSocketFilter(tcpClient, e.objs.ProxyRedir); err != nil {
-		return fmt.Errorf("attach to client socket: %w", err)
+	if err := link.AttachSocketFilter(tcpBackend, e.objs.ProxyRedir); err != nil {
+		return fmt.Errorf("attach to backend socket: %w", err)
 	}
 
 	log.Printf("[eBPF] offloaded: client(fd=%d,cookie=%d)->key1  backend(fd=%d,cookie=%d)->key0",

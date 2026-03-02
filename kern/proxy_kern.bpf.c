@@ -27,7 +27,13 @@ int proxy_redir(struct sk_msg_md *msg)
     if (!dst)
         return SK_PASS;
 
-    return bpf_msg_redirect_map(msg, &sock_map, *dst, 0);
+    int ret = bpf_msg_redirect_map(msg, &sock_map, *dst, 0);
+    if (ret < 0) {
+        // If redirect fails, pass the message through
+        return SK_PASS;
+    }
+
+    return ret;
 }
 
 char _license[] SEC("license") = "Dual BSD/GPL";
